@@ -6,6 +6,7 @@ using TypeSpec.Http;
 @service({
   title: "API сервиса записи на звонок"
 })
+@server("https://api.example.com", "Основной сервер API")
 namespace CallBooking;
 
 @doc("Дата и время в формате ISO 8601. Во всех моделях API используется UTC.")
@@ -194,4 +195,85 @@ model ErrorResponse {
 
   @doc("Дополнительные пояснения по ошибке.")
   details?: string[];
+}
+
+@doc("Список типов встреч.")
+model EventTypeListResponse {
+  items: EventType[];
+}
+
+@doc("Список свободных слотов.")
+model SlotListResponse {
+  items: Slot[];
+}
+
+@doc("Список предстоящих бронирований.")
+model BookingListResponse {
+  items: Booking[];
+}
+
+@doc("Параметры запроса свободных слотов.")
+model GetSlotsQuery {
+  @doc("Начало периода выборки в UTC.")
+  from?: UtcDateTime;
+
+  @doc("Конец периода выборки в UTC.")
+  to?: UtcDateTime;
+}
+
+@route("/event-types")
+tag "Guest";
+interface GuestEventTypesApi {
+  @doc("Получить список доступных типов встреч.")
+  @get
+  listEventTypes(): EventTypeListResponse | ErrorResponse;
+
+  @doc("Получить один тип встречи по идентификатору.")
+  @get
+  @route("/{eventTypeId}")
+  getEventType(@path eventTypeId: ResourceId): EventType | ErrorResponse;
+
+  @doc("Получить свободные слоты для выбранного типа встречи.")
+  @get
+  @route("/{eventTypeId}/slots")
+  listEventTypeSlots(
+    @path eventTypeId: ResourceId,
+    @query query?: GetSlotsQuery
+  ): SlotListResponse | ErrorResponse;
+}
+
+@route("/bookings")
+tag "Guest";
+interface GuestBookingsApi {
+  @doc("Создать бронирование для выбранного слота.")
+  @post
+  createBooking(@body body: CreateBookingForm): Booking | ErrorResponse;
+}
+
+@route("/owner/event-types")
+tag "Owner";
+interface OwnerEventTypesApi {
+  @doc("Получить список всех типов встреч для управления.")
+  @get
+  listOwnerEventTypes(): EventTypeListResponse | ErrorResponse;
+
+  @doc("Создать новый тип встречи.")
+  @post
+  createOwnerEventType(@body body: CreateEventTypeForm): EventType | ErrorResponse;
+
+  @doc("Обновить существующий тип встречи.")
+  @patch
+  @route("/{eventTypeId}")
+  updateOwnerEventType(
+    @path eventTypeId: ResourceId,
+    @body body: UpdateEventTypeForm
+  ): EventType | ErrorResponse;
+}
+
+@route("/owner/bookings")
+tag "Owner";
+interface OwnerBookingsApi {
+  @doc("Получить список всех предстоящих бронирований.")
+  @get
+  listOwnerBookings(): BookingListResponse | ErrorResponse;
 }
