@@ -167,6 +167,21 @@ Frontend implementation plan:
 
 ### Команды frontend
 
+Требования к окружению:
+
+```text
+Node.js >= 22
+npm >= 10
+```
+
+Если используете `nvm`, достаточно выполнить:
+
+```bash
+nvm use
+```
+
+В проекте включен `engine-strict=true`, поэтому `npm install` под Node.js 18 завершится ошибкой. Это намеренно: свежие версии TypeSpec и Prism, нужные для чистого `npm audit`, требуют более новый Node.js.
+
 Установка зависимостей:
 
 ```bash
@@ -198,6 +213,16 @@ npm run api:mock
 ```
 
 По умолчанию frontend ожидает API на `http://localhost:4010`. Для другого адреса задайте `VITE_API_BASE_URL` по примеру `.env.example`.
+
+### Npm audit
+
+Для корректной проверки зависимостей используйте Node.js 22 или новее. Старые версии TypeSpec и Prism, совместимые с Node 18, подтягивают уязвимые dev-зависимости. После переключения на Node.js 22 можно обновить toolchain:
+
+```bash
+npm install -D @typespec/compiler@latest @typespec/http@latest @typespec/openapi3@latest @stoplight/prism-cli@latest
+npm install vite@latest @vitejs/plugin-react@latest react-router-dom@latest
+npm audit --audit-level=high
+```
 
 ---
 

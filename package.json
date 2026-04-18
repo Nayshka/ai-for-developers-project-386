@@ -3,17 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "api:openapi": "tsp compile spec/api.tsp --emit @typespec/openapi3 --option @typespec/openapi3.emitter-output-dir={cwd}/spec/generated",
     "api:mock": "prism mock spec/generated/openapi.yaml --port 4010"
-  },
-  "overrides": {
-    "@stoplight/prism-core": "5.6.0",
-    "@stoplight/prism-http": "5.7.0",
-    "@stoplight/prism-http-server": "5.7.0"
   },
   "dependencies": {
     "@mantine/core": "^8.0.0",
