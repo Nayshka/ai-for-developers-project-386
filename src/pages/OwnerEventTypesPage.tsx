@@ -12,7 +12,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 
 import { getErrorMessage } from '../shared/api/client';
 import {
@@ -53,11 +53,22 @@ export function OwnerEventTypesPage() {
   const [createForm, setCreateForm] = useState(initialCreateForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EventTypeFormState>(initialCreateForm);
+  const [createdEventTypes, setCreatedEventTypes] = useState<EventType[]>([]);
+  const [updatedEventTypes, setUpdatedEventTypes] = useState<Record<string, EventType>>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const eventTypes = eventTypesQuery.data?.items ?? [];
+  const displayEventTypes = useMemo(() => {
+    const updated = eventTypes.map((eventType) => updatedEventTypes[eventType.id] ?? eventType);
+    const existingIds = new Set(updated.map((eventType) => eventType.id));
+    const created = createdEventTypes.filter((eventType) => !existingIds.has(eventType.id));
+
+    return [...created, ...updated];
+  }, [createdEventTypes, eventTypes, updatedEventTypes]);
 
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSuccessMessage(null);
 
     createMutation.mutate(
       {
@@ -66,12 +77,20 @@ export function OwnerEventTypesPage() {
         durationMinutes: createForm.durationMinutes,
       },
       {
-        onSuccess: () => setCreateForm(initialCreateForm),
+        onSuccess: (eventType) => {
+          setCreatedEventTypes((items) => [
+            eventType,
+            ...items.filter((item) => item.id !== eventType.id),
+          ]);
+          setCreateForm(initialCreateForm);
+          setSuccessMessage(`Тип встречи "${eventType.name}" отправлен на сохранение.`);
+        },
       },
     );
   };
 
   const startEditing = (eventType: EventType) => {
+    setSuccessMessage(null);
     setEditingId(eventType.id);
     setEditForm(toFormState(eventType));
   };
@@ -83,6 +102,8 @@ export function OwnerEventTypesPage() {
       return;
     }
 
+    setSuccessMessage(null);
+
     updateMutation.mutate(
       {
         eventTypeId: editingId,
@@ -93,7 +114,28 @@ export function OwnerEventTypesPage() {
         },
       },
       {
-        onSuccess: () => setEditingId(null),
+        onSuccess: (eventType) => {
+          const currentEventType = displayEventTypes.find((item) => item.id === editingId);
+          const localEventType: EventType = {
+            id: editingId,
+            name: editForm.name.trim(),
+            description: editForm.description.trim() || undefined,
+            durationMinutes: editForm.durationMinutes,
+            createdAt: currentEventType?.createdAt ?? eventType.createdAt,
+            updatedAt: eventType.updatedAt,
+          };
+          const nextEventType = eventType.id === editingId ? eventType : localEventType;
+
+          setUpdatedEventTypes((items) => ({
+            ...items,
+            [editingId]: nextEventType,
+          }));
+          setCreatedEventTypes((items) =>
+            items.map((item) => (item.id === editingId ? nextEventType : item)),
+          );
+          setEditingId(null);
+          setSuccessMessage(`Изменения для "${nextEventType.name}" отправлены на сохранение.`);
+        },
       },
     );
   };
@@ -109,6 +151,12 @@ export function OwnerEventTypesPage() {
           Здесь владелец будет создавать и редактировать форматы встреч без авторизации.
         </Text>
       </section>
+
+      {successMessage ? (
+        <Alert color="callBlue" title="Готово" radius="sm">
+          {successMessage}
+        </Alert>
+      ) : null}
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" className="owner-grid">
         <Card className="surface-card owner-form-card" padding="lg" radius="sm">
@@ -172,14 +220,15 @@ export function OwnerEventTypesPage() {
             <LoadingState message="Загружаем типы встреч..." />
           ) : eventTypesQuery.isError ? (
             <ErrorState message={getErrorMessage(eventTypesQuery.error)} />
-          ) : eventTypes.length === 0 ? (
+          ) : displayEventTypes.length === 0 ? (
             <EmptyState
               title="Типы встреч пока не созданы"
               message="Создайте первый формат встречи, чтобы он появился у гостя."
             />
           ) : (
-            eventTypes.map((eventType) => {
+            displayEventTypes.map((eventType) => {
               const isEditing = editingId === eventType.id;
+              const isLocalCreated = createdEventTypes.some((item) => item.id === eventType.id);
 
               return (
                 <Card
@@ -272,6 +321,12 @@ export function OwnerEventTypesPage() {
                           {formatDateTime(eventType.updatedAt)}
                         </Text>
                       </div>
+
+                      {isLocalCreated ? (
+                        <Badge color="callBlue" variant="outline" w="fit-content">
+                          Новый
+                        </Badge>
+                      ) : null}
 
                       <Button
                         color="callBlue"
