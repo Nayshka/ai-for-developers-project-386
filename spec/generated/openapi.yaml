@@ -1,0 +1,562 @@
+openapi: 3.0.0
+info:
+  title: API сервиса записи на звонок
+  version: 0.0.0
+tags:
+  - name: Guest
+  - name: Owner
+paths:
+  /bookings:
+    post:
+      operationId: GuestBookingsApi_createBooking
+      description: Создать бронирование для выбранного слота.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Booking'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingForm'
+            example:
+              eventTypeId: consultation
+              range:
+                startAt: 2026-04-20T08:00:00.000Z
+                endAt: 2026-04-20T08:30:00.000Z
+              guest:
+                name: Анна
+                email: anna@example.com
+  /event-types:
+    get:
+      operationId: GuestEventTypesApi_listEventTypes
+      description: Получить список доступных типов встреч.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/EventTypeListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Guest
+  /event-types/{eventTypeId}:
+    get:
+      operationId: GuestEventTypesApi_getEventType
+      description: Получить один тип встречи по идентификатору.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ResourceId'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/EventType'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Guest
+  /event-types/{eventTypeId}/slots:
+    get:
+      operationId: GuestEventTypesApi_listEventTypeSlots
+      description: Получить свободные слоты для выбранного типа встречи.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ResourceId'
+        - name: query
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/GetSlotsQuery'
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/SlotListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Guest
+  /owner/bookings:
+    get:
+      operationId: OwnerBookingsApi_listOwnerBookings
+      description: Получить список всех предстоящих бронирований.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/BookingListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Owner
+  /owner/event-types:
+    get:
+      operationId: OwnerEventTypesApi_listOwnerEventTypes
+      description: Получить список всех типов встреч для управления.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/EventTypeListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Owner
+    post:
+      operationId: OwnerEventTypesApi_createOwnerEventType
+      description: Создать новый тип встречи.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/EventType'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Owner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventTypeForm'
+            example:
+              name: Разбор проекта
+              description: Встреча для обсуждения текущей реализации и следующих шагов.
+              durationMinutes: 45
+  /owner/event-types/{eventTypeId}:
+    patch:
+      operationId: OwnerEventTypesApi_updateOwnerEventType
+      description: Обновить существующий тип встречи.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ResourceId'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/EventType'
+                  - $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Owner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventTypeForm'
+            example:
+              name: Консультация
+              description: Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.
+              durationMinutes: 30
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - eventType
+        - guest
+        - range
+        - status
+        - createdAt
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор бронирования.
+        eventTypeId:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор выбранного типа встречи.
+        eventType:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeSnapshot'
+          description: Снимок типа встречи на момент бронирования.
+        guest:
+          allOf:
+            - $ref: '#/components/schemas/GuestInfo'
+          description: Данные гостя из формы бронирования.
+        range:
+          allOf:
+            - $ref: '#/components/schemas/TimeRange'
+          description: Дата и время встречи.
+        status:
+          allOf:
+            - $ref: '#/components/schemas/BookingStatus'
+          description: Текущий статус бронирования.
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Дата создания бронирования.
+      description: 'Бронирование, созданное гостем. Инвариант: длительность range должна совпадать с durationMinutes выбранного типа встречи.'
+    BookingListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+      example:
+        items:
+          - id: booking-1
+            eventTypeId: consultation
+            eventType:
+              id: consultation
+              name: Консультация
+              durationMinutes: 30
+            guest:
+              name: Анна
+              email: anna@example.com
+            range:
+              startAt: 2026-04-20T08:00:00.000Z
+              endAt: 2026-04-20T08:30:00.000Z
+            status: confirmed
+            createdAt: 2026-04-18T08:00:00.000Z
+          - id: booking-2
+            eventTypeId: demo
+            eventType:
+              id: demo
+              name: Демонстрация
+              durationMinutes: 60
+            guest:
+              name: Иван
+              email: ivan@example.com
+            range:
+              startAt: 2026-04-21T11:00:00.000Z
+              endAt: 2026-04-21T12:00:00.000Z
+            status: confirmed
+            createdAt: 2026-04-18T08:20:00.000Z
+      description: Список предстоящих бронирований.
+    BookingStatus:
+      type: string
+      enum:
+        - confirmed
+        - cancelled
+      description: Статус бронирования.
+    CreateBookingForm:
+      type: object
+      required:
+        - eventTypeId
+        - range
+        - guest
+      properties:
+        eventTypeId:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор выбранного типа встречи.
+        range:
+          allOf:
+            - $ref: '#/components/schemas/TimeRange'
+          description: Выбранный слот.
+        guest:
+          allOf:
+            - $ref: '#/components/schemas/GuestInfo'
+          description: Данные гостя.
+      description: Форма создания бронирования.
+    CreateEventTypeForm:
+      type: object
+      required:
+        - name
+        - durationMinutes
+      properties:
+        name:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeName'
+          description: Название типа встречи.
+        description:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeDescription'
+          description: Описание типа встречи.
+        durationMinutes:
+          allOf:
+            - $ref: '#/components/schemas/DurationMinutes'
+          description: Длительность встречи в минутах.
+      description: Форма создания типа встречи.
+    DurationMinutes:
+      type: integer
+      format: int32
+      minimum: 1
+      description: Длительность встречи в минутах.
+    Email:
+      type: string
+      description: Адрес электронной почты.
+    ErrorCode:
+      type: string
+      enum:
+        - validation_error
+        - event_type_not_found
+        - booking_not_found
+        - slot_unavailable
+        - booking_overlap
+        - booking_out_of_range
+        - invalid_time_range
+        - internal_error
+      description: Код ошибки API.
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          allOf:
+            - $ref: '#/components/schemas/ErrorCode'
+          description: Машиночитаемый код ошибки.
+        message:
+          type: string
+          description: Сообщение для пользователя на русском языке.
+        details:
+          type: array
+          items:
+            type: string
+          description: Дополнительные пояснения по ошибке.
+      description: Стандартная ошибка API.
+    EventType:
+      type: object
+      required:
+        - id
+        - name
+        - durationMinutes
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор типа встречи.
+        name:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeName'
+          description: Название встречи.
+        description:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeDescription'
+          description: Краткое описание для страницы выбора встречи.
+        durationMinutes:
+          allOf:
+            - $ref: '#/components/schemas/DurationMinutes'
+          description: Длительность встречи в минутах.
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Дата создания.
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Дата последнего обновления.
+      description: Тип встречи, который владелец публикует для записи.
+    EventTypeDescription:
+      type: string
+      maxLength: 1000
+      description: Описание типа встречи.
+    EventTypeListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventType'
+      example:
+        items:
+          - id: consultation
+            name: Консультация
+            description: Короткий созвон для обсуждения вопроса и следующих шагов.
+            durationMinutes: 30
+            createdAt: 2026-04-18T06:00:00.000Z
+            updatedAt: 2026-04-18T06:00:00.000Z
+          - id: demo
+            name: Демонстрация
+            description: Подробная встреча с показом продукта и ответами на вопросы.
+            durationMinutes: 60
+            createdAt: 2026-04-18T06:15:00.000Z
+            updatedAt: 2026-04-18T06:15:00.000Z
+      description: Список типов встреч.
+    EventTypeName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Название типа встречи.
+    EventTypeSnapshot:
+      type: object
+      required:
+        - id
+        - name
+        - durationMinutes
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор типа встречи.
+        name:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeName'
+          description: Название типа встречи на момент бронирования.
+        durationMinutes:
+          allOf:
+            - $ref: '#/components/schemas/DurationMinutes'
+          description: Длительность встречи в минутах на момент бронирования.
+      description: Снимок типа встречи на момент бронирования. Нужен, чтобы история бронирований не менялась при редактировании типа встречи.
+    GetSlotsQuery:
+      type: object
+      properties:
+        from:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Начало периода выборки в UTC.
+        to:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Конец периода выборки в UTC.
+      description: Параметры запроса свободных слотов.
+    GuestInfo:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          allOf:
+            - $ref: '#/components/schemas/GuestName'
+          description: 'Поле формы: Имя'
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Email'
+          description: 'Поле формы: Email'
+      description: Данные гостя из формы бронирования.
+    GuestName:
+      type: string
+      minLength: 1
+      maxLength: 120
+      description: Имя гостя.
+    ResourceId:
+      type: string
+      description: Уникальный идентификатор сущности.
+    Slot:
+      type: object
+      required:
+        - eventTypeId
+        - range
+        - isAvailable
+      properties:
+        eventTypeId:
+          allOf:
+            - $ref: '#/components/schemas/ResourceId'
+          description: Идентификатор типа встречи, для которого рассчитан слот.
+        range:
+          allOf:
+            - $ref: '#/components/schemas/TimeRange'
+          description: Временной интервал слота.
+        isAvailable:
+          type: boolean
+          description: Признак доступности слота для бронирования.
+      description: Свободный слот для выбранного типа встречи. Слот является вычисляемой моделью и не обязан храниться в базе данных. Слот рассчитывается на основе длительности встречи, рабочего окна 09:00-19:00, горизонта 14 дней и существующих бронирований.
+    SlotListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+      example:
+        items:
+          - eventTypeId: consultation
+            range:
+              startAt: 2026-04-20T08:00:00.000Z
+              endAt: 2026-04-20T08:30:00.000Z
+            isAvailable: true
+          - eventTypeId: consultation
+            range:
+              startAt: 2026-04-20T09:30:00.000Z
+              endAt: 2026-04-20T10:00:00.000Z
+            isAvailable: true
+          - eventTypeId: consultation
+            range:
+              startAt: 2026-04-21T11:00:00.000Z
+              endAt: 2026-04-21T11:30:00.000Z
+            isAvailable: true
+      description: Список свободных слотов.
+    TimeRange:
+      type: object
+      required:
+        - startAt
+        - endAt
+      properties:
+        startAt:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Дата и время начала в UTC.
+        endAt:
+          allOf:
+            - $ref: '#/components/schemas/UtcDateTime'
+          description: Дата и время окончания в UTC.
+      description: 'Промежуток времени: начало включительно, конец не включается. Инварианты: startAt должен быть раньше endAt.'
+    UpdateEventTypeForm:
+      type: object
+      properties:
+        name:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeName'
+          description: Название типа встречи.
+        description:
+          allOf:
+            - $ref: '#/components/schemas/EventTypeDescription'
+          description: Описание типа встречи.
+        durationMinutes:
+          allOf:
+            - $ref: '#/components/schemas/DurationMinutes'
+          description: Длительность встречи в минутах.
+      description: Форма редактирования типа встречи.
+    UtcDateTime:
+      type: string
+      description: Дата и время в формате ISO 8601. Во всех моделях API используется UTC.
+servers:
+  - url: https://api.example.com
+    description: Основной сервер API
+    variables: {}

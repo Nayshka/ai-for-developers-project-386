@@ -57,8 +57,7 @@ enum BookingStatus {
   cancelled
 }
 
-@doc("Промежуток времени: начало включительно, конец не включается.")
-@doc("Инварианты: startAt должен быть раньше endAt.")
+@doc("Промежуток времени: начало включительно, конец не включается. Инварианты: startAt должен быть раньше endAt.")
 model TimeRange {
   @doc("Дата и время начала в UTC.")
   startAt: UtcDateTime;
@@ -76,8 +75,7 @@ model GuestInfo {
   email: Email;
 }
 
-@doc("Снимок типа встречи на момент бронирования.")
-@doc("Нужен, чтобы история бронирований не менялась при редактировании типа встречи.")
+@doc("Снимок типа встречи на момент бронирования. Нужен, чтобы история бронирований не менялась при редактировании типа встречи.")
 model EventTypeSnapshot {
   @doc("Идентификатор типа встречи.")
   id: ResourceId;
@@ -110,9 +108,7 @@ model EventType {
   updatedAt: UtcDateTime;
 }
 
-@doc("Свободный слот для выбранного типа встречи.")
-@doc("Слот является вычисляемой моделью и не обязан храниться в базе данных.")
-@doc("Слот рассчитывается на основе длительности встречи, рабочего окна 09:00-19:00, горизонта 14 дней и существующих бронирований.")
+@doc("Свободный слот для выбранного типа встречи. Слот является вычисляемой моделью и не обязан храниться в базе данных. Слот рассчитывается на основе длительности встречи, рабочего окна 09:00-19:00, горизонта 14 дней и существующих бронирований.")
 model Slot {
   @doc("Идентификатор типа встречи, для которого рассчитан слот.")
   eventTypeId: ResourceId;
@@ -124,8 +120,7 @@ model Slot {
   isAvailable: boolean;
 }
 
-@doc("Бронирование, созданное гостем.")
-@doc("Инвариант: длительность range должна совпадать с durationMinutes выбранного типа встречи.")
+@doc("Бронирование, созданное гостем. Инвариант: длительность range должна совпадать с durationMinutes выбранного типа встречи.")
 model Booking {
   @doc("Идентификатор бронирования.")
   id: ResourceId;
@@ -198,16 +193,106 @@ model ErrorResponse {
 }
 
 @doc("Список типов встреч.")
+@example(#{
+  items: #[
+    #{
+      id: "consultation",
+      name: "Консультация",
+      description: "Короткий созвон для обсуждения вопроса и следующих шагов.",
+      durationMinutes: 30,
+      createdAt: "2026-04-18T06:00:00.000Z",
+      updatedAt: "2026-04-18T06:00:00.000Z"
+    },
+    #{
+      id: "demo",
+      name: "Демонстрация",
+      description: "Подробная встреча с показом продукта и ответами на вопросы.",
+      durationMinutes: 60,
+      createdAt: "2026-04-18T06:15:00.000Z",
+      updatedAt: "2026-04-18T06:15:00.000Z"
+    }
+  ]
+})
 model EventTypeListResponse {
   items: EventType[];
 }
 
 @doc("Список свободных слотов.")
+@example(#{
+  items: #[
+    #{
+      eventTypeId: "consultation",
+      range: #{
+        startAt: "2026-04-20T08:00:00.000Z",
+        endAt: "2026-04-20T08:30:00.000Z"
+      },
+      isAvailable: true
+    },
+    #{
+      eventTypeId: "consultation",
+      range: #{
+        startAt: "2026-04-20T09:30:00.000Z",
+        endAt: "2026-04-20T10:00:00.000Z"
+      },
+      isAvailable: true
+    },
+    #{
+      eventTypeId: "consultation",
+      range: #{
+        startAt: "2026-04-21T11:00:00.000Z",
+        endAt: "2026-04-21T11:30:00.000Z"
+      },
+      isAvailable: true
+    }
+  ]
+})
 model SlotListResponse {
   items: Slot[];
 }
 
 @doc("Список предстоящих бронирований.")
+@example(#{
+  items: #[
+    #{
+      id: "booking-1",
+      eventTypeId: "consultation",
+      eventType: #{
+        id: "consultation",
+        name: "Консультация",
+        durationMinutes: 30
+      },
+      guest: #{
+        name: "Анна",
+        email: "anna@example.com"
+      },
+      range: #{
+        startAt: "2026-04-20T08:00:00.000Z",
+        endAt: "2026-04-20T08:30:00.000Z"
+      },
+      status: BookingStatus.confirmed,
+      createdAt: "2026-04-18T08:00:00.000Z"
+    },
+    #{
+      id: "booking-2",
+      eventTypeId: "demo",
+      eventType: #{
+        id: "demo",
+        name: "Демонстрация",
+        durationMinutes: 60
+      },
+      guest: #{
+        name: "Иван",
+        email: "ivan@example.com"
+      },
+      range: #{
+        startAt: "2026-04-21T11:00:00.000Z",
+        endAt: "2026-04-21T12:00:00.000Z"
+      },
+      status: BookingStatus.confirmed,
+      createdAt: "2026-04-18T08:20:00.000Z"
+    }
+  ]
+})
 model BookingListResponse {
   items: Booking[];
 }
@@ -222,18 +307,82 @@ model GetSlotsQuery {
 }
 
 @route("/event-types")
-tag "Guest";
+@tag("Guest")
 interface GuestEventTypesApi {
   @doc("Получить список доступных типов встреч.")
+  @opExample(#{
+    returnType: #{
+      items: #[
+        #{
+          id: "consultation",
+          name: "Консультация",
+          description: "Короткий созвон для обсуждения вопроса и следующих шагов.",
+          durationMinutes: 30,
+          createdAt: "2026-04-18T06:00:00.000Z",
+          updatedAt: "2026-04-18T06:00:00.000Z"
+        },
+        #{
+          id: "demo",
+          name: "Демонстрация",
+          description: "Подробная встреча с показом продукта и ответами на вопросы.",
+          durationMinutes: 60,
+          createdAt: "2026-04-18T06:15:00.000Z",
+          updatedAt: "2026-04-18T06:15:00.000Z"
+        }
+      ]
+    }
+  })
   @get
   listEventTypes(): EventTypeListResponse | ErrorResponse;
 
   @doc("Получить один тип встречи по идентификатору.")
+  @opExample(#{
+    parameters: #{ eventTypeId: "consultation" },
+    returnType: #{
+      id: "consultation",
+      name: "Консультация",
+      description: "Короткий созвон для обсуждения вопроса и следующих шагов.",
+      durationMinutes: 30,
+      createdAt: "2026-04-18T06:00:00.000Z",
+      updatedAt: "2026-04-18T06:00:00.000Z"
+    }
+  })
   @get
   @route("/{eventTypeId}")
   getEventType(@path eventTypeId: ResourceId): EventType | ErrorResponse;
 
   @doc("Получить свободные слоты для выбранного типа встречи.")
+  @opExample(#{
+    parameters: #{ eventTypeId: "consultation" },
+    returnType: #{
+      items: #[
+        #{
+          eventTypeId: "consultation",
+          range: #{
+            startAt: "2026-04-20T08:00:00.000Z",
+            endAt: "2026-04-20T08:30:00.000Z"
+          },
+          isAvailable: true
+        },
+        #{
+          eventTypeId: "consultation",
+          range: #{
+            startAt: "2026-04-20T09:30:00.000Z",
+            endAt: "2026-04-20T10:00:00.000Z"
+          },
+          isAvailable: true
+        },
+        #{
+          eventTypeId: "consultation",
+          range: #{
+            startAt: "2026-04-21T11:00:00.000Z",
+            endAt: "2026-04-21T11:30:00.000Z"
+          },
+          isAvailable: true
+        }
+      ]
+    }
+  })
   @get
   @route("/{eventTypeId}/slots")
   listEventTypeSlots(
@@ -243,25 +392,116 @@ interface GuestEventTypesApi {
 }
 
 @route("/bookings")
-tag "Guest";
+@tag("Guest")
 interface GuestBookingsApi {
   @doc("Создать бронирование для выбранного слота.")
+  @opExample(#{
+    parameters: #{
+      body: #{
+        eventTypeId: "consultation",
+        range: #{
+          startAt: "2026-04-20T08:00:00.000Z",
+          endAt: "2026-04-20T08:30:00.000Z"
+        },
+        guest: #{
+          name: "Анна",
+          email: "anna@example.com"
+        }
+      }
+    },
+    returnType: #{
+      id: "booking-1",
+      eventTypeId: "consultation",
+      eventType: #{
+        id: "consultation",
+        name: "Консультация",
+        durationMinutes: 30
+      },
+      guest: #{
+        name: "Анна",
+        email: "anna@example.com"
+      },
+      range: #{
+        startAt: "2026-04-20T08:00:00.000Z",
+        endAt: "2026-04-20T08:30:00.000Z"
+      },
+      status: BookingStatus.confirmed,
+      createdAt: "2026-04-18T08:00:00.000Z"
+    }
+  })
   @post
   createBooking(@body body: CreateBookingForm): Booking | ErrorResponse;
 }
 
 @route("/owner/event-types")
-tag "Owner";
+@tag("Owner")
 interface OwnerEventTypesApi {
   @doc("Получить список всех типов встреч для управления.")
+  @opExample(#{
+    returnType: #{
+      items: #[
+        #{
+          id: "consultation",
+          name: "Консультация",
+          description: "Короткий созвон для обсуждения вопроса и следующих шагов.",
+          durationMinutes: 30,
+          createdAt: "2026-04-18T06:00:00.000Z",
+          updatedAt: "2026-04-18T06:00:00.000Z"
+        },
+        #{
+          id: "demo",
+          name: "Демонстрация",
+          description: "Подробная встреча с показом продукта и ответами на вопросы.",
+          durationMinutes: 60,
+          createdAt: "2026-04-18T06:15:00.000Z",
+          updatedAt: "2026-04-18T06:15:00.000Z"
+        }
+      ]
+    }
+  })
   @get
   listOwnerEventTypes(): EventTypeListResponse | ErrorResponse;
 
   @doc("Создать новый тип встречи.")
+  @opExample(#{
+    parameters: #{
+      body: #{
+        name: "Разбор проекта",
+        description: "Встреча для обсуждения текущей реализации и следующих шагов.",
+        durationMinutes: 45
+      }
+    },
+    returnType: #{
+      id: "project-review",
+      name: "Разбор проекта",
+      description: "Встреча для обсуждения текущей реализации и следующих шагов.",
+      durationMinutes: 45,
+      createdAt: "2026-04-18T09:00:00.000Z",
+      updatedAt: "2026-04-18T09:00:00.000Z"
+    }
+  })
   @post
   createOwnerEventType(@body body: CreateEventTypeForm): EventType | ErrorResponse;
 
   @doc("Обновить существующий тип встречи.")
+  @opExample(#{
+    parameters: #{
+      eventTypeId: "consultation",
+      body: #{
+        name: "Консультация",
+        description: "Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.",
+        durationMinutes: 30
+      }
+    },
+    returnType: #{
+      id: "consultation",
+      name: "Консультация",
+      description: "Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.",
+      durationMinutes: 30,
+      createdAt: "2026-04-18T06:00:00.000Z",
+      updatedAt: "2026-04-18T09:30:00.000Z"
+    }
+  })
   @patch
   @route("/{eventTypeId}")
   updateOwnerEventType(
@@ -271,9 +511,53 @@ interface OwnerEventTypesApi {
 }
 
 @route("/owner/bookings")
-tag "Owner";
+@tag("Owner")
 interface OwnerBookingsApi {
   @doc("Получить список всех предстоящих бронирований.")
+  @opExample(#{
+    returnType: #{
+      items: #[
+        #{
+          id: "booking-1",
+          eventTypeId: "consultation",
+          eventType: #{
+            id: "consultation",
+            name: "Консультация",
+            durationMinutes: 30
+          },
+          guest: #{
+            name: "Анна",
+            email: "anna@example.com"
+          },
+          range: #{
+            startAt: "2026-04-20T08:00:00.000Z",
+            endAt: "2026-04-20T08:30:00.000Z"
+          },
+          status: BookingStatus.confirmed,
+          createdAt: "2026-04-18T08:00:00.000Z"
+        },
+        #{
+          id: "booking-2",
+          eventTypeId: "demo",
+          eventType: #{
+            id: "demo",
+            name: "Демонстрация",
+            durationMinutes: 60
+          },
+          guest: #{
+            name: "Иван",
+            email: "ivan@example.com"
+          },
+          range: #{
+            startAt: "2026-04-21T11:00:00.000Z",
+            endAt: "2026-04-21T12:00:00.000Z"
+          },
+          status: BookingStatus.confirmed,
+          createdAt: "2026-04-18T08:20:00.000Z"
+        }
+      ]
+    }
+  })
   @get
   listOwnerBookings(): BookingListResponse | ErrorResponse;
 }

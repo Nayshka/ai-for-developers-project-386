@@ -165,6 +165,40 @@ Frontend design:
 Frontend implementation plan:
 - `docs/superpowers/specs/2026-04-18-frontend-implementation-plan.md`
 
+### Команды frontend
+
+Установка зависимостей:
+
+```bash
+npm install
+```
+
+Запуск frontend:
+
+```bash
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Генерация OpenAPI из TypeSpec:
+
+```bash
+npm run api:openapi
+```
+
+Запуск Prism mock API:
+
+```bash
+npm run api:mock
+```
+
+По умолчанию frontend ожидает API на `http://localhost:4010`. Для другого адреса задайте `VITE_API_BASE_URL` по примеру `.env.example`.
+
 ---
 
 ## 🚀 Возможные улучшения (в будущем)
