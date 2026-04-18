@@ -27,6 +27,9 @@
 Основной frontend design:
 - `docs/superpowers/specs/2026-04-18-frontend-design.md`
 
+План реализации frontend:
+- `docs/superpowers/specs/2026-04-18-frontend-implementation-plan.md`
+
 ## Границы MVP
 
 В текущий MVP входят:

@@ -162,6 +162,9 @@ spec/api.tsp -> OpenAPI JSON/YAML -> Prism mock server -> frontend API client
 Frontend design:
 - `docs/superpowers/specs/2026-04-18-frontend-design.md`
 
+Frontend implementation plan:
+- `docs/superpowers/specs/2026-04-18-frontend-implementation-plan.md`
+
 ---
 
 ## 🚀 Возможные улучшения (в будущем)
