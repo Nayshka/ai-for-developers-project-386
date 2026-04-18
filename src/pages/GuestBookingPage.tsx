@@ -8,7 +8,7 @@ import {
   useEventTypeQuery,
   useEventTypeSlotsQuery,
 } from '../shared/api/queries';
-import type { Slot } from '../shared/api/types';
+import type { Booking, GuestInfo, Slot, TimeRange } from '../shared/api/types';
 import { formatDate, formatDateTime, formatTimeRange } from '../shared/lib/dateTime';
 import { EmptyState } from '../shared/ui/EmptyState';
 import { ErrorState } from '../shared/ui/ErrorState';
@@ -18,6 +18,12 @@ type SlotGroup = {
   dateKey: string;
   label: string;
   slots: Slot[];
+};
+
+type BookingConfirmation = {
+  eventTypeName: string;
+  guest: GuestInfo;
+  range: TimeRange;
 };
 
 function groupSlotsByDay(slots: Slot[]) {
@@ -43,6 +49,19 @@ function groupSlotsByDay(slots: Slot[]) {
   return Array.from(groups.values());
 }
 
+function toConfirmation(
+  booking: Booking,
+  fallbackEventTypeName: string | undefined,
+  guest: GuestInfo,
+  range: TimeRange,
+): BookingConfirmation {
+  return {
+    eventTypeName: fallbackEventTypeName || booking.eventType.name || 'Встреча',
+    guest,
+    range,
+  };
+}
+
 export function GuestBookingPage() {
   const { id } = useParams();
   const eventTypeQuery = useEventTypeQuery(id);
@@ -51,10 +70,15 @@ export function GuestBookingPage() {
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+  const [bookedSlotKeys, setBookedSlotKeys] = useState<string[]>([]);
+  const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
 
   const availableSlots = useMemo(
-    () => slotsQuery.data?.items.filter((slot) => slot.isAvailable) ?? [],
-    [slotsQuery.data?.items],
+    () =>
+      slotsQuery.data?.items.filter(
+        (slot) => slot.isAvailable && !bookedSlotKeys.includes(slot.range.startAt),
+      ) ?? [],
+    [bookedSlotKeys, slotsQuery.data?.items],
   );
   const slotGroups = useMemo(() => groupSlotsByDay(availableSlots), [availableSlots]);
 
@@ -65,18 +89,34 @@ export function GuestBookingPage() {
       return;
     }
 
-    createBookingMutation.mutate({
-      eventTypeId: id,
-      range: selectedSlot.range,
-      guest: {
-        name: guestName.trim(),
-        email: guestEmail.trim(),
+    const guest = {
+      name: guestName.trim(),
+      email: guestEmail.trim(),
+    };
+    const range = selectedSlot.range;
+
+    createBookingMutation.mutate(
+      {
+        eventTypeId: id,
+        range,
+        guest,
       },
-    });
+      {
+        onSuccess: (booking) => {
+          setBookedSlotKeys((keys) =>
+            keys.includes(range.startAt) ? keys : [...keys, range.startAt],
+          );
+          setConfirmation(toConfirmation(booking, eventType?.name, guest, range));
+          setSelectedSlot(null);
+          setGuestName('');
+          setGuestEmail('');
+        },
+      },
+    );
   };
 
   const eventType = eventTypeQuery.data;
-  const booking = createBookingMutation.data;
+  const booking = confirmation;
 
   if (eventTypeQuery.isLoading || slotsQuery.isLoading) {
     return <LoadingState message="Загружаем встречу и свободные слоты..." />;
@@ -102,9 +142,19 @@ export function GuestBookingPage() {
   if (booking) {
     return (
       <Stack gap="lg">
-        <Button component={Link} to="/" variant="subtle" color="callBlue" w="fit-content">
-          Вернуться к типам встреч
-        </Button>
+        <Group>
+          <Button
+            onClick={() => setConfirmation(null)}
+            variant="subtle"
+            color="callBlue"
+            w="fit-content"
+          >
+            Выбрать другое время
+          </Button>
+          <Button component={Link} to="/" variant="subtle" color="callBlue" w="fit-content">
+            Вернуться к типам встреч
+          </Button>
+        </Group>
 
         <Card className="surface-card booking-success" padding="xl" radius="sm">
           <Stack gap="md">
@@ -121,7 +171,7 @@ export function GuestBookingPage() {
                 <Text size="xs" c="dimmed" fw={700}>
                   Тип встречи
                 </Text>
-                <Text fw={800}>{booking.eventType.name}</Text>
+                <Text fw={800}>{booking.eventTypeName}</Text>
               </div>
               <div className="confirmation-item">
                 <Text size="xs" c="dimmed" fw={700}>
@@ -146,6 +196,9 @@ export function GuestBookingPage() {
             <Group>
               <Button component={Link} to="/" color="callBlue">
                 Новая запись
+              </Button>
+              <Button onClick={() => setConfirmation(null)} color="callBlue" variant="light">
+                Выбрать еще слот
               </Button>
             </Group>
           </Stack>
@@ -198,7 +251,8 @@ export function GuestBookingPage() {
                 <div>
                   <Title order={3}>Свободные слоты</Title>
                   <Text c="dimmed" mt={4}>
-                    Выберите один удобный интервал.
+                    Выберите один удобный интервал. Слоты, забронированные в этой сессии,
+                    скрываются из списка.
                   </Text>
                 </div>
 
