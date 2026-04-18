@@ -24,6 +24,9 @@
 
 Если меняется поведение API, модели, ошибки или endpoint'ы, сначала нужно обновить `spec/api.tsp`, и только потом реализацию.
 
+Основной frontend design:
+- `docs/superpowers/specs/2026-04-18-frontend-design.md`
+
 ## Границы MVP
 
 В текущий MVP входят:
@@ -105,6 +108,29 @@
 - `POST /owner/event-types`
 - `PATCH /owner/event-types/{eventTypeId}`
 - `GET /owner/bookings`
+
+## Frontend Stack
+
+Для frontend MVP используется:
+- React;
+- TypeScript;
+- Vite;
+- Mantine;
+- React Router;
+- TanStack Query;
+- Prism для mock API во время разработки.
+
+Архитектурный подход frontend:
+- `Pages + shared API layer`.
+
+Prism должен работать от OpenAPI-спецификации, сгенерированной из `spec/api.tsp`.
+
+Во frontend MVP не добавлять:
+- глобальный state manager без необходимости;
+- авторизацию;
+- удаление типов встреч;
+- отмену или перенос бронирований;
+- кастомную дизайн-систему поверх Mantine.
 
 ## Правила изменений
 

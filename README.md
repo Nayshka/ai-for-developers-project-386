@@ -140,6 +140,30 @@
 
 ---
 
+## 🧱 Frontend stack
+
+Для frontend MVP зафиксирован стек:
+- React
+- TypeScript
+- Vite
+- Mantine
+- React Router
+- TanStack Query
+- Prism для mock API во время разработки
+
+Frontend разрабатывается по подходу `Pages + shared API layer`.
+
+Prism используется через OpenAPI-спецификацию, сгенерированную из TypeSpec:
+
+```text
+spec/api.tsp -> OpenAPI JSON/YAML -> Prism mock server -> frontend API client
+```
+
+Frontend design:
+- `docs/superpowers/specs/2026-04-18-frontend-design.md`
+
+---
+
 ## 🚀 Возможные улучшения (в будущем)
 
 - Авторизация пользователей
