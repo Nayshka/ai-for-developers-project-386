@@ -180,7 +180,7 @@ npm >= 10
 nvm use
 ```
 
-В проекте включен `engine-strict=true`, поэтому `npm install` под Node.js 18 завершится ошибкой. Это намеренно: свежие версии TypeSpec и Prism, нужные для чистого `npm audit`, требуют более новый Node.js.
+В проекте включен `engine-strict=true`, поэтому `npm install` под Node.js 18 завершится ошибкой. Это намеренно: актуальные версии frontend/tooling-зависимостей требуют более новый Node.js.
 
 Установка зависимостей:
 
@@ -216,11 +216,24 @@ npm run api:mock
 
 ### Npm audit
 
-Для корректной проверки зависимостей используйте Node.js 22 или новее. Старые версии TypeSpec и Prism, совместимые с Node 18, подтягивают уязвимые dev-зависимости. После переключения на Node.js 22 можно обновить toolchain:
+Для корректной проверки зависимостей используйте Node.js 22 или новее. Старые версии TypeSpec и Prism, совместимые с Node 18, подтягивали уязвимые dev-зависимости.
+
+Текущее проверенное состояние:
+
+- `@typespec/*@1.11.x`;
+- `vite@8.x`;
+- `@vitejs/plugin-react@6.x`;
+- `react-router-dom@7.x`;
+- `@stoplight/prism-cli@5.14.2`.
+
+`@stoplight/prism-cli@latest` на момент обновления требует Node.js `>=24.14.0`, поэтому проект остается на Prism `5.14.2` с точечными npm `overrides` для уязвимых транзитивных зависимостей.
+
+Проверка:
 
 ```bash
-npm install -D @typespec/compiler@latest @typespec/http@latest @typespec/openapi3@latest @stoplight/prism-cli@latest
-npm install vite@latest @vitejs/plugin-react@latest react-router-dom@latest
+npm install
+npm run api:openapi
+npm run build
 npm audit --audit-level=high
 ```
 

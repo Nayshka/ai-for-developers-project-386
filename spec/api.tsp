@@ -3,7 +3,7 @@ import "@typespec/openapi3";
 
 using TypeSpec.Http;
 
-@service({
+@service(#{
   title: "API сервиса записи на звонок"
 })
 @server("https://api.example.com", "Основной сервер API")

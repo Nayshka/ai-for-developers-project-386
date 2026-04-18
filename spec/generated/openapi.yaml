@@ -31,8 +31,8 @@ paths:
             example:
               eventTypeId: consultation
               range:
-                startAt: 2026-04-20T08:00:00.000Z
-                endAt: 2026-04-20T08:30:00.000Z
+                startAt: '2026-04-20T08:00:00.000Z'
+                endAt: '2026-04-20T08:30:00.000Z'
               guest:
                 name: Анна
                 email: anna@example.com
@@ -239,6 +239,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Booking'
+      description: Список предстоящих бронирований.
       example:
         items:
           - id: booking-1
@@ -251,10 +252,10 @@ components:
               name: Анна
               email: anna@example.com
             range:
-              startAt: 2026-04-20T08:00:00.000Z
-              endAt: 2026-04-20T08:30:00.000Z
+              startAt: '2026-04-20T08:00:00.000Z'
+              endAt: '2026-04-20T08:30:00.000Z'
             status: confirmed
-            createdAt: 2026-04-18T08:00:00.000Z
+            createdAt: '2026-04-18T08:00:00.000Z'
           - id: booking-2
             eventTypeId: demo
             eventType:
@@ -265,11 +266,10 @@ components:
               name: Иван
               email: ivan@example.com
             range:
-              startAt: 2026-04-21T11:00:00.000Z
-              endAt: 2026-04-21T12:00:00.000Z
+              startAt: '2026-04-21T11:00:00.000Z'
+              endAt: '2026-04-21T12:00:00.000Z'
             status: confirmed
-            createdAt: 2026-04-18T08:20:00.000Z
-      description: Список предстоящих бронирований.
+            createdAt: '2026-04-18T08:20:00.000Z'
     BookingStatus:
       type: string
       enum:
@@ -401,21 +401,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EventType'
+      description: Список типов встреч.
       example:
         items:
           - id: consultation
             name: Консультация
             description: Короткий созвон для обсуждения вопроса и следующих шагов.
             durationMinutes: 30
-            createdAt: 2026-04-18T06:00:00.000Z
-            updatedAt: 2026-04-18T06:00:00.000Z
+            createdAt: '2026-04-18T06:00:00.000Z'
+            updatedAt: '2026-04-18T06:00:00.000Z'
           - id: demo
             name: Демонстрация
             description: Подробная встреча с показом продукта и ответами на вопросы.
             durationMinutes: 60
-            createdAt: 2026-04-18T06:15:00.000Z
-            updatedAt: 2026-04-18T06:15:00.000Z
-      description: Список типов встреч.
+            createdAt: '2026-04-18T06:15:00.000Z'
+            updatedAt: '2026-04-18T06:15:00.000Z'
     EventTypeName:
       type: string
       minLength: 1
@@ -504,24 +504,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Slot'
+      description: Список свободных слотов.
       example:
         items:
           - eventTypeId: consultation
             range:
-              startAt: 2026-04-20T08:00:00.000Z
-              endAt: 2026-04-20T08:30:00.000Z
+              startAt: '2026-04-20T08:00:00.000Z'
+              endAt: '2026-04-20T08:30:00.000Z'
             isAvailable: true
           - eventTypeId: consultation
             range:
-              startAt: 2026-04-20T09:30:00.000Z
-              endAt: 2026-04-20T10:00:00.000Z
+              startAt: '2026-04-20T09:30:00.000Z'
+              endAt: '2026-04-20T10:00:00.000Z'
             isAvailable: true
           - eventTypeId: consultation
             range:
-              startAt: 2026-04-21T11:00:00.000Z
-              endAt: 2026-04-21T11:30:00.000Z
+              startAt: '2026-04-21T11:00:00.000Z'
+              endAt: '2026-04-21T11:30:00.000Z'
             isAvailable: true
-      description: Список свободных слотов.
     TimeRange:
       type: object
       required:
