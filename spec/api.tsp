@@ -579,15 +579,15 @@ interface OwnerEventTypesApi {
   @opExample(#{
     parameters: #{
       body: #{
-        name: "Разбор проекта",
-        description: "Встреча для обсуждения текущей реализации и следующих шагов.",
+        name: "Пример нового типа встречи",
+        description: "Статичный mock-пример для Prism во время ручной проверки frontend.",
         durationMinutes: 45
       }
     },
     returnType: #{
-      id: "project-review",
-      name: "Разбор проекта",
-      description: "Встреча для обсуждения текущей реализации и следующих шагов.",
+      id: "sample-created-event-type",
+      name: "Пример нового типа встречи",
+      description: "Статичный mock-пример для Prism во время ручной проверки frontend.",
       durationMinutes: 45,
       createdAt: "2026-04-18T09:00:00.000Z",
       updatedAt: "2026-04-18T09:00:00.000Z"
@@ -601,15 +601,15 @@ interface OwnerEventTypesApi {
     parameters: #{
       eventTypeId: "consultation",
       body: #{
-        name: "Консультация",
-        description: "Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.",
+        name: "Пример обновленного типа встречи",
+        description: "Статичный mock-пример для Prism во время ручной проверки frontend.",
         durationMinutes: 30
       }
     },
     returnType: #{
       id: "consultation",
-      name: "Консультация",
-      description: "Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.",
+      name: "Пример обновленного типа встречи",
+      description: "Статичный mock-пример для Prism во время ручной проверки frontend.",
       durationMinutes: 30,
       createdAt: "2026-04-18T06:00:00.000Z",
       updatedAt: "2026-04-18T09:30:00.000Z"

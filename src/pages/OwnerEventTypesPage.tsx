@@ -46,6 +46,35 @@ function toFormState(eventType: EventType): EventTypeFormState {
   };
 }
 
+function normalizeFormState(form: EventTypeFormState) {
+  return {
+    name: form.name.trim(),
+    description: form.description.trim() || undefined,
+    durationMinutes: form.durationMinutes,
+  };
+}
+
+function buildLocalEventType(
+  form: EventTypeFormState,
+  options?: {
+    id?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  },
+): EventType {
+  const normalized = normalizeFormState(form);
+  const now = new Date().toISOString();
+
+  return {
+    id: options?.id ?? `local-${crypto.randomUUID()}`,
+    name: normalized.name,
+    description: normalized.description,
+    durationMinutes: normalized.durationMinutes,
+    createdAt: options?.createdAt ?? now,
+    updatedAt: options?.updatedAt ?? now,
+  };
+}
+
 export function OwnerEventTypesPage() {
   const eventTypesQuery = useOwnerEventTypesQuery();
   const createMutation = useCreateOwnerEventTypeMutation();
@@ -70,20 +99,26 @@ export function OwnerEventTypesPage() {
     event.preventDefault();
     setSuccessMessage(null);
 
+    const submittedForm = {
+      ...createForm,
+    };
+
     createMutation.mutate(
-      {
-        name: createForm.name.trim(),
-        description: createForm.description.trim() || undefined,
-        durationMinutes: createForm.durationMinutes,
-      },
+      normalizeFormState(submittedForm),
       {
         onSuccess: (eventType) => {
+          const nextEventType = buildLocalEventType(submittedForm, {
+            id: eventType.id,
+            createdAt: eventType.createdAt,
+            updatedAt: eventType.updatedAt,
+          });
+
           setCreatedEventTypes((items) => [
-            eventType,
-            ...items.filter((item) => item.id !== eventType.id),
+            nextEventType,
+            ...items.filter((item) => item.id !== nextEventType.id),
           ]);
           setCreateForm(initialCreateForm);
-          setSuccessMessage(`Тип встречи "${eventType.name}" отправлен на сохранение.`);
+          setSuccessMessage(`Тип встречи "${nextEventType.name}" отправлен на сохранение.`);
         },
       },
     );
@@ -104,27 +139,23 @@ export function OwnerEventTypesPage() {
 
     setSuccessMessage(null);
 
+    const submittedForm = {
+      ...editForm,
+    };
+
     updateMutation.mutate(
       {
         eventTypeId: editingId,
-        body: {
-          name: editForm.name.trim(),
-          description: editForm.description.trim() || undefined,
-          durationMinutes: editForm.durationMinutes,
-        },
+        body: normalizeFormState(submittedForm),
       },
       {
         onSuccess: (eventType) => {
           const currentEventType = displayEventTypes.find((item) => item.id === editingId);
-          const localEventType: EventType = {
+          const nextEventType = buildLocalEventType(submittedForm, {
             id: editingId,
-            name: editForm.name.trim(),
-            description: editForm.description.trim() || undefined,
-            durationMinutes: editForm.durationMinutes,
             createdAt: currentEventType?.createdAt ?? eventType.createdAt,
             updatedAt: eventType.updatedAt,
-          };
-          const nextEventType = eventType.id === editingId ? eventType : localEventType;
+          });
 
           setUpdatedEventTypes((items) => ({
             ...items,

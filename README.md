@@ -237,7 +237,10 @@ curl -H 'Prefer: code=409' \
 
 - для `GET /event-types/{id}` можно форсировать `404` с `code: event_type_not_found`;
 - для `POST /bookings` можно форсировать `409` с `code: slot_unavailable`;
+- для `POST /owner/event-types` и `PATCH /owner/event-types/{id}` Prism возвращает статичные example-объекты из OpenAPI, а не echo введенных значений;
 - `details` в mock error responses остаётся схематичным (`["string"]`), но `status`, `code` и `message` уже пригодны для ручной проверки UI.
+
+Для owner UI это уже учтено: после создания и редактирования frontend отображает значения из формы локально, чтобы ручная проверка не зависела от статичных Prism examples.
 
 По умолчанию frontend ожидает API на `http://localhost:4010`. Для другого адреса задайте `VITE_API_BASE_URL` по примеру `.env.example`.
 
