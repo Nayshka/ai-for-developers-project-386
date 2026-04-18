@@ -88,6 +88,14 @@ model EventTypeSnapshot {
 }
 
 @doc("Тип встречи, который владелец публикует для записи.")
+@example(#{
+  id: "consultation",
+  name: "Консультация",
+  description: "Короткий созвон для обсуждения вопроса и следующих шагов.",
+  durationMinutes: 30,
+  createdAt: "2026-04-18T06:00:00.000Z",
+  updatedAt: "2026-04-18T06:00:00.000Z"
+})
 model EventType {
   @doc("Идентификатор типа встречи.")
   id: ResourceId;
@@ -190,6 +198,102 @@ model ErrorResponse {
 
   @doc("Дополнительные пояснения по ошибке.")
   details?: string[];
+}
+
+@doc("Ошибка валидации входных данных.")
+model ValidationErrorBody {
+  code: "validation_error";
+  message: "Проверьте корректность заполнения формы.";
+  details?: string[];
+}
+
+@doc("Тип встречи не найден.")
+model EventTypeNotFoundErrorBody {
+  code: "event_type_not_found";
+  message: "Тип встречи не найден.";
+  details?: string[];
+}
+
+@doc("Выбранный слот уже недоступен.")
+model SlotUnavailableErrorBody {
+  code: "slot_unavailable";
+  message: "Выбранный слот уже недоступен.";
+  details?: string[];
+}
+
+@doc("Новый слот пересекается с существующим бронированием.")
+model BookingOverlapErrorBody {
+  code: "booking_overlap";
+  message: "Выбранный интервал пересекается с уже существующей встречей.";
+  details?: string[];
+}
+
+@doc("Выбранный слот выходит за пределы окна доступности.")
+model BookingOutOfRangeErrorBody {
+  code: "booking_out_of_range";
+  message: "Выбранный слот находится вне допустимого окна бронирования.";
+  details?: string[];
+}
+
+@doc("Передан некорректный временной интервал.")
+model InvalidTimeRangeErrorBody {
+  code: "invalid_time_range";
+  message: "Некорректный временной интервал.";
+  details?: string[];
+}
+
+@doc("Ошибка валидации входных данных.")
+model ValidationErrorResult {
+  @statusCode
+  statusCode: 400;
+
+  @body
+  body: ValidationErrorBody;
+}
+
+@doc("Тип встречи не найден.")
+model EventTypeNotFoundResult {
+  @statusCode
+  statusCode: 404;
+
+  @body
+  body: EventTypeNotFoundErrorBody;
+}
+
+@doc("Выбранный слот уже недоступен.")
+model SlotUnavailableResult {
+  @statusCode
+  statusCode: 409;
+
+  @body
+  body: SlotUnavailableErrorBody;
+}
+
+@doc("Новый слот пересекается с существующим бронированием.")
+model BookingOverlapResult {
+  @statusCode
+  statusCode: 409;
+
+  @body
+  body: BookingOverlapErrorBody;
+}
+
+@doc("Выбранный слот выходит за пределы окна доступности.")
+model BookingOutOfRangeResult {
+  @statusCode
+  statusCode: 409;
+
+  @body
+  body: BookingOutOfRangeErrorBody;
+}
+
+@doc("Передан некорректный временной интервал.")
+model InvalidTimeRangeResult {
+  @statusCode
+  statusCode: 400;
+
+  @body
+  body: InvalidTimeRangeErrorBody;
 }
 
 @doc("Список типов встреч.")
@@ -333,7 +437,7 @@ interface GuestEventTypesApi {
     }
   })
   @get
-  listEventTypes(): EventTypeListResponse | ErrorResponse;
+  listEventTypes(): EventTypeListResponse;
 
   @doc("Получить один тип встречи по идентификатору.")
   @opExample(#{
@@ -349,7 +453,7 @@ interface GuestEventTypesApi {
   })
   @get
   @route("/{eventTypeId}")
-  getEventType(@path eventTypeId: ResourceId): EventType | ErrorResponse;
+  getEventType(@path eventTypeId: ResourceId): EventType | EventTypeNotFoundResult;
 
   @doc("Получить свободные слоты для выбранного типа встречи.")
   @opExample(#{
@@ -388,7 +492,7 @@ interface GuestEventTypesApi {
   listEventTypeSlots(
     @path eventTypeId: ResourceId,
     @query query?: GetSlotsQuery
-  ): SlotListResponse | ErrorResponse;
+  ): SlotListResponse | EventTypeNotFoundResult;
 }
 
 @route("/bookings")
@@ -430,7 +534,16 @@ interface GuestBookingsApi {
     }
   })
   @post
-  createBooking(@body body: CreateBookingForm): Booking | ErrorResponse;
+  createBooking(
+    @body body: CreateBookingForm
+  ):
+    | Booking
+    | ValidationErrorResult
+    | EventTypeNotFoundResult
+    | SlotUnavailableResult
+    | BookingOverlapResult
+    | BookingOutOfRangeResult
+    | InvalidTimeRangeResult;
 }
 
 @route("/owner/event-types")
@@ -460,7 +573,7 @@ interface OwnerEventTypesApi {
     }
   })
   @get
-  listOwnerEventTypes(): EventTypeListResponse | ErrorResponse;
+  listOwnerEventTypes(): EventTypeListResponse;
 
   @doc("Создать новый тип встречи.")
   @opExample(#{
@@ -481,7 +594,7 @@ interface OwnerEventTypesApi {
     }
   })
   @post
-  createOwnerEventType(@body body: CreateEventTypeForm): EventType | ErrorResponse;
+  createOwnerEventType(@body body: CreateEventTypeForm): EventType | ValidationErrorResult;
 
   @doc("Обновить существующий тип встречи.")
   @opExample(#{
@@ -507,7 +620,7 @@ interface OwnerEventTypesApi {
   updateOwnerEventType(
     @path eventTypeId: ResourceId,
     @body body: UpdateEventTypeForm
-  ): EventType | ErrorResponse;
+  ): EventType | ValidationErrorResult | EventTypeNotFoundResult;
 }
 
 @route("/owner/bookings")
@@ -559,5 +672,5 @@ interface OwnerBookingsApi {
     }
   })
   @get
-  listOwnerBookings(): BookingListResponse | ErrorResponse;
+  listOwnerBookings(): BookingListResponse;
 }

@@ -17,9 +17,45 @@ paths:
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Booking'
+              example:
+                id: booking-1
+                eventTypeId: consultation
+                eventType:
+                  id: consultation
+                  name: Консультация
+                  durationMinutes: 30
+                guest:
+                  name: Анна
+                  email: anna@example.com
+                range:
+                  startAt: '2026-04-20T08:00:00.000Z'
+                  endAt: '2026-04-20T08:30:00.000Z'
+                status: confirmed
+                createdAt: '2026-04-18T08:00:00.000Z'
+        '400':
+          description: Ошибка валидации входных данных.
+          content:
+            application/json:
+              schema:
                 anyOf:
-                  - $ref: '#/components/schemas/Booking'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ValidationErrorBody'
+                  - $ref: '#/components/schemas/InvalidTimeRangeErrorBody'
+        '404':
+          description: Тип встречи не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundErrorBody'
+        '409':
+          description: Выбранный слот уже недоступен.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/SlotUnavailableErrorBody'
+                  - $ref: '#/components/schemas/BookingOverlapErrorBody'
+                  - $ref: '#/components/schemas/BookingOutOfRangeErrorBody'
       tags:
         - Guest
       requestBody:
@@ -47,9 +83,21 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/EventTypeListResponse'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EventTypeListResponse'
+              example:
+                items:
+                  - id: consultation
+                    name: Консультация
+                    description: Короткий созвон для обсуждения вопроса и следующих шагов.
+                    durationMinutes: 30
+                    createdAt: '2026-04-18T06:00:00.000Z'
+                    updatedAt: '2026-04-18T06:00:00.000Z'
+                  - id: demo
+                    name: Демонстрация
+                    description: Подробная встреча с показом продукта и ответами на вопросы.
+                    durationMinutes: 60
+                    createdAt: '2026-04-18T06:15:00.000Z'
+                    updatedAt: '2026-04-18T06:15:00.000Z'
       tags:
         - Guest
   /event-types/{eventTypeId}:
@@ -68,9 +116,20 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/EventType'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EventType'
+              example:
+                id: consultation
+                name: Консультация
+                description: Короткий созвон для обсуждения вопроса и следующих шагов.
+                durationMinutes: 30
+                createdAt: '2026-04-18T06:00:00.000Z'
+                updatedAt: '2026-04-18T06:00:00.000Z'
+        '404':
+          description: Тип встречи не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundErrorBody'
       tags:
         - Guest
   /event-types/{eventTypeId}/slots:
@@ -95,9 +154,30 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/SlotListResponse'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SlotListResponse'
+              example:
+                items:
+                  - eventTypeId: consultation
+                    range:
+                      startAt: '2026-04-20T08:00:00.000Z'
+                      endAt: '2026-04-20T08:30:00.000Z'
+                    isAvailable: true
+                  - eventTypeId: consultation
+                    range:
+                      startAt: '2026-04-20T09:30:00.000Z'
+                      endAt: '2026-04-20T10:00:00.000Z'
+                    isAvailable: true
+                  - eventTypeId: consultation
+                    range:
+                      startAt: '2026-04-21T11:00:00.000Z'
+                      endAt: '2026-04-21T11:30:00.000Z'
+                    isAvailable: true
+        '404':
+          description: Тип встречи не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundErrorBody'
       tags:
         - Guest
   /owner/bookings:
@@ -111,9 +191,37 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/BookingListResponse'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BookingListResponse'
+              example:
+                items:
+                  - id: booking-1
+                    eventTypeId: consultation
+                    eventType:
+                      id: consultation
+                      name: Консультация
+                      durationMinutes: 30
+                    guest:
+                      name: Анна
+                      email: anna@example.com
+                    range:
+                      startAt: '2026-04-20T08:00:00.000Z'
+                      endAt: '2026-04-20T08:30:00.000Z'
+                    status: confirmed
+                    createdAt: '2026-04-18T08:00:00.000Z'
+                  - id: booking-2
+                    eventTypeId: demo
+                    eventType:
+                      id: demo
+                      name: Демонстрация
+                      durationMinutes: 60
+                    guest:
+                      name: Иван
+                      email: ivan@example.com
+                    range:
+                      startAt: '2026-04-21T11:00:00.000Z'
+                      endAt: '2026-04-21T12:00:00.000Z'
+                    status: confirmed
+                    createdAt: '2026-04-18T08:20:00.000Z'
       tags:
         - Owner
   /owner/event-types:
@@ -127,9 +235,21 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/EventTypeListResponse'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EventTypeListResponse'
+              example:
+                items:
+                  - id: consultation
+                    name: Консультация
+                    description: Короткий созвон для обсуждения вопроса и следующих шагов.
+                    durationMinutes: 30
+                    createdAt: '2026-04-18T06:00:00.000Z'
+                    updatedAt: '2026-04-18T06:00:00.000Z'
+                  - id: demo
+                    name: Демонстрация
+                    description: Подробная встреча с показом продукта и ответами на вопросы.
+                    durationMinutes: 60
+                    createdAt: '2026-04-18T06:15:00.000Z'
+                    updatedAt: '2026-04-18T06:15:00.000Z'
       tags:
         - Owner
     post:
@@ -142,9 +262,20 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/EventType'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EventType'
+              example:
+                id: project-review
+                name: Разбор проекта
+                description: Встреча для обсуждения текущей реализации и следующих шагов.
+                durationMinutes: 45
+                createdAt: '2026-04-18T09:00:00.000Z'
+                updatedAt: '2026-04-18T09:00:00.000Z'
+        '400':
+          description: Ошибка валидации входных данных.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorBody'
       tags:
         - Owner
       requestBody:
@@ -173,9 +304,26 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/EventType'
-                  - $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EventType'
+              example:
+                id: consultation
+                name: Консультация
+                description: Короткий созвон для обсуждения вопроса, ограничений и следующих шагов.
+                durationMinutes: 30
+                createdAt: '2026-04-18T06:00:00.000Z'
+                updatedAt: '2026-04-18T09:30:00.000Z'
+        '400':
+          description: Ошибка валидации входных данных.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorBody'
+        '404':
+          description: Тип встречи не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundErrorBody'
       tags:
         - Owner
       requestBody:
@@ -270,6 +418,44 @@ components:
               endAt: '2026-04-21T12:00:00.000Z'
             status: confirmed
             createdAt: '2026-04-18T08:20:00.000Z'
+    BookingOutOfRangeErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - booking_out_of_range
+        message:
+          type: string
+          enum:
+            - Выбранный слот находится вне допустимого окна бронирования.
+        details:
+          type: array
+          items:
+            type: string
+      description: Выбранный слот выходит за пределы окна доступности.
+    BookingOverlapErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - booking_overlap
+        message:
+          type: string
+          enum:
+            - Выбранный интервал пересекается с уже существующей встречей.
+        details:
+          type: array
+          items:
+            type: string
+      description: Новый слот пересекается с существующим бронированием.
     BookingStatus:
       type: string
       enum:
@@ -388,6 +574,13 @@ components:
             - $ref: '#/components/schemas/UtcDateTime'
           description: Дата последнего обновления.
       description: Тип встречи, который владелец публикует для записи.
+      example:
+        id: consultation
+        name: Консультация
+        description: Короткий созвон для обсуждения вопроса и следующих шагов.
+        durationMinutes: 30
+        createdAt: '2026-04-18T06:00:00.000Z'
+        updatedAt: '2026-04-18T06:00:00.000Z'
     EventTypeDescription:
       type: string
       maxLength: 1000
@@ -421,6 +614,25 @@ components:
       minLength: 1
       maxLength: 100
       description: Название типа встречи.
+    EventTypeNotFoundErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - event_type_not_found
+        message:
+          type: string
+          enum:
+            - Тип встречи не найден.
+        details:
+          type: array
+          items:
+            type: string
+      description: Тип встречи не найден.
     EventTypeSnapshot:
       type: object
       required:
@@ -473,6 +685,25 @@ components:
       minLength: 1
       maxLength: 120
       description: Имя гостя.
+    InvalidTimeRangeErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - invalid_time_range
+        message:
+          type: string
+          enum:
+            - Некорректный временной интервал.
+        details:
+          type: array
+          items:
+            type: string
+      description: Передан некорректный временной интервал.
     ResourceId:
       type: string
       description: Уникальный идентификатор сущности.
@@ -522,6 +753,25 @@ components:
               startAt: '2026-04-21T11:00:00.000Z'
               endAt: '2026-04-21T11:30:00.000Z'
             isAvailable: true
+    SlotUnavailableErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - slot_unavailable
+        message:
+          type: string
+          enum:
+            - Выбранный слот уже недоступен.
+        details:
+          type: array
+          items:
+            type: string
+      description: Выбранный слот уже недоступен.
     TimeRange:
       type: object
       required:
@@ -556,6 +806,25 @@ components:
     UtcDateTime:
       type: string
       description: Дата и время в формате ISO 8601. Во всех моделях API используется UTC.
+    ValidationErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - validation_error
+        message:
+          type: string
+          enum:
+            - Проверьте корректность заполнения формы.
+        details:
+          type: array
+          items:
+            type: string
+      description: Ошибка валидации входных данных.
 servers:
   - url: https://api.example.com
     description: Основной сервер API

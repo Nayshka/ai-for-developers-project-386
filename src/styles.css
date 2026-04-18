@@ -275,6 +275,44 @@ body {
   overflow: hidden;
 }
 
+.booking-summary-card {
+  min-height: 116px;
+}
+
+.booking-summary-value {
+  margin-top: 10px;
+  color: #172033;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.booking-summary-date {
+  font-size: 18px;
+}
+
+.bookings-mobile-list {
+  display: none;
+}
+
+.booking-mobile-card {
+  min-height: 220px;
+}
+
+.booking-mobile-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.booking-mobile-meta-item {
+  min-height: 74px;
+  border: 1px solid #dbe3ef;
+  border-radius: 7px;
+  background: #f7f9fc;
+  padding: 12px;
+}
+
 .bookings-table-card th {
   color: #526070;
   font-size: 12px;
@@ -309,6 +347,19 @@ body {
   }
 
   .confirmation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bookings-desktop {
+    display: none;
+  }
+
+  .bookings-mobile-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .booking-mobile-meta-grid {
     grid-template-columns: 1fr;
   }
 }

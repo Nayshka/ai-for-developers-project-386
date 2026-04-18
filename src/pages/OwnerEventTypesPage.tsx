@@ -173,9 +173,11 @@ export function OwnerEventTypesPage() {
                 label="Название"
                 placeholder="Консультация"
                 value={createForm.name}
-                onChange={(event) =>
-                  setCreateForm((form) => ({ ...form, name: event.currentTarget.value }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+
+                  setCreateForm((form) => ({ ...form, name: value }));
+                }}
                 required
               />
               <Textarea
@@ -184,9 +186,11 @@ export function OwnerEventTypesPage() {
                 autosize
                 minRows={3}
                 value={createForm.description}
-                onChange={(event) =>
-                  setCreateForm((form) => ({ ...form, description: event.currentTarget.value }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+
+                  setCreateForm((form) => ({ ...form, description: value }));
+                }}
               />
               <NumberInput
                 label="Длительность, минут"
@@ -243,12 +247,14 @@ export function OwnerEventTypesPage() {
                         <TextInput
                           label="Название"
                           value={editForm.name}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            const value = event.currentTarget.value;
+
                             setEditForm((form) => ({
                               ...form,
-                              name: event.currentTarget.value,
-                            }))
-                          }
+                              name: value,
+                            }));
+                          }}
                           required
                         />
                         <Textarea
@@ -256,12 +262,14 @@ export function OwnerEventTypesPage() {
                           autosize
                           minRows={2}
                           value={editForm.description}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            const value = event.currentTarget.value;
+
                             setEditForm((form) => ({
                               ...form,
-                              description: event.currentTarget.value,
-                            }))
-                          }
+                              description: value,
+                            }));
+                          }}
                         />
                         <NumberInput
                           label="Длительность, минут"

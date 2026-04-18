@@ -212,6 +212,33 @@ npm run api:openapi
 npm run api:mock
 ```
 
+Проверка error-state через Prism:
+
+```bash
+curl -H 'Prefer: code=404' http://127.0.0.1:4010/event-types/consultation
+curl -H 'Prefer: code=409' \
+  -H 'Content-Type: application/json' \
+  -d '{"eventTypeId":"consultation","range":{"startAt":"2026-04-20T08:00:00.000Z","endAt":"2026-04-20T08:30:00.000Z"},"guest":{"name":"Анна","email":"anna@example.com"}}' \
+  http://127.0.0.1:4010/bookings
+```
+
+Эти запросы полезны для ручной проверки экранов ошибок frontend без готового backend. Prism вернет ответы с соответствующим HTTP-статусом и mock-телом ошибки из OpenAPI-спецификации.
+
+Минимальный checklist для frontend error-state:
+
+- `GET /event-types/{id}` с `Prefer: code=404` — проверить экран ошибки на странице выбора слота.
+- `GET /event-types/{id}/slots` с `Prefer: code=404` — проверить ошибку загрузки списка слотов.
+- `POST /bookings` с `Prefer: code=409` — проверить ошибку недоступного слота в форме бронирования.
+- `POST /bookings` с `Prefer: code=400` — проверить валидационную ошибку формы бронирования.
+- `PATCH /owner/event-types/{id}` с `Prefer: code=404` — проверить ошибку редактирования несуществующего типа встречи.
+- `PATCH /owner/event-types/{id}` с `Prefer: code=400` — проверить валидационную ошибку формы владельца.
+
+Текущее проверенное поведение Prism:
+
+- для `GET /event-types/{id}` можно форсировать `404` с `code: event_type_not_found`;
+- для `POST /bookings` можно форсировать `409` с `code: slot_unavailable`;
+- `details` в mock error responses остаётся схематичным (`["string"]`), но `status`, `code` и `message` уже пригодны для ручной проверки UI.
+
 По умолчанию frontend ожидает API на `http://localhost:4010`. Для другого адреса задайте `VITE_API_BASE_URL` по примеру `.env.example`.
 
 ### Npm audit
