@@ -10,6 +10,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "backend:dev": "tsx watch server/src/index.ts",
+    "backend:build": "tsc -p tsconfig.server.json",
+    "backend:test": "vitest run server/src",
     "preview": "vite preview",
     "api:openapi": "tsp compile spec/api.tsp --emit @typespec/openapi3 --option @typespec/openapi3.emitter-output-dir={cwd}/spec/generated",
     "api:mock": "prism mock spec/generated/openapi.yaml --port 4010"
@@ -19,22 +22,28 @@
     "lodash": "^4.18.1"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@mantine/core": "^8.0.0",
     "@mantine/hooks": "^8.0.0",
     "@tanstack/react-query": "^5.0.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "fastify": "^5.8.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.14.1",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@stoplight/prism-cli": "^5.14.2",
+    "@types/node": "^22.19.17",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@typespec/compiler": "^1.11.0",
     "@typespec/http": "^1.11.0",
     "@typespec/openapi3": "^1.11.0",
-    "typescript": "^5.0.0"
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.5"
   }
 }
