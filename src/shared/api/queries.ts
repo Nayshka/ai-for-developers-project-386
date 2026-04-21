@@ -43,6 +43,7 @@ export function useCreateBookingMutation() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.eventTypeSlots(body.eventTypeId),
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ownerBookings });
     },
   });
 }

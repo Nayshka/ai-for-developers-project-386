@@ -7,6 +7,11 @@ import { EmptyState } from '../shared/ui/EmptyState';
 import { ErrorState } from '../shared/ui/ErrorState';
 import { LoadingState } from '../shared/ui/LoadingState';
 
+const bookingStatusLabel = {
+  confirmed: 'Подтверждено',
+  cancelled: 'Отменено',
+};
+
 export function OwnerBookingsPage() {
   const bookingsQuery = useOwnerBookingsQuery();
   const bookings = bookingsQuery.data?.items ?? [];
@@ -110,7 +115,7 @@ export function OwnerBookingsPage() {
                           color={booking.status === 'confirmed' ? 'callBlue' : 'gray'}
                           variant="light"
                         >
-                          {booking.status}
+                          {bookingStatusLabel[booking.status]}
                         </Badge>
                       </Table.Td>
                     </Table.Tr>
@@ -132,7 +137,7 @@ export function OwnerBookingsPage() {
                       </Text>
                     </div>
                     <Badge color={booking.status === 'confirmed' ? 'callBlue' : 'gray'} variant="light">
-                      {booking.status}
+                      {bookingStatusLabel[booking.status]}
                     </Badge>
                   </Group>
 
