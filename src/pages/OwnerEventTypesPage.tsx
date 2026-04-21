@@ -29,7 +29,7 @@ import { LoadingState } from '../shared/ui/LoadingState';
 type EventTypeFormState = {
   name: string;
   description: string;
-  durationMinutes: number;
+  durationMinutes: number | string;
 };
 
 const initialCreateForm: EventTypeFormState = {
@@ -50,8 +50,22 @@ function normalizeFormState(form: EventTypeFormState) {
   return {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
-    durationMinutes: form.durationMinutes,
+    durationMinutes: toDurationMinutes(form.durationMinutes),
   };
+}
+
+function toDurationMinutes(value: EventTypeFormState['durationMinutes']) {
+  return typeof value === 'number' ? value : Number(value);
+}
+
+function validateFormState(form: EventTypeFormState) {
+  const durationMinutes = toDurationMinutes(form.durationMinutes);
+
+  if (!Number.isInteger(durationMinutes) || durationMinutes < 1) {
+    return 'Длительность должна быть целым числом больше 0.';
+  }
+
+  return null;
 }
 
 function buildLocalEventType(
@@ -85,6 +99,8 @@ export function OwnerEventTypesPage() {
   const [createdEventTypes, setCreatedEventTypes] = useState<EventType[]>([]);
   const [updatedEventTypes, setUpdatedEventTypes] = useState<Record<string, EventType>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const eventTypes = eventTypesQuery.data?.items ?? [];
   const displayEventTypes = useMemo(() => {
@@ -98,10 +114,17 @@ export function OwnerEventTypesPage() {
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSuccessMessage(null);
+    setCreateFormError(null);
 
     const submittedForm = {
       ...createForm,
     };
+    const validationError = validateFormState(submittedForm);
+
+    if (validationError) {
+      setCreateFormError(validationError);
+      return;
+    }
 
     createMutation.mutate(
       normalizeFormState(submittedForm),
@@ -126,6 +149,7 @@ export function OwnerEventTypesPage() {
 
   const startEditing = (eventType: EventType) => {
     setSuccessMessage(null);
+    setEditFormError(null);
     setEditingId(eventType.id);
     setEditForm(toFormState(eventType));
   };
@@ -138,10 +162,17 @@ export function OwnerEventTypesPage() {
     }
 
     setSuccessMessage(null);
+    setEditFormError(null);
 
     const submittedForm = {
       ...editForm,
     };
+    const validationError = validateFormState(submittedForm);
+
+    if (validationError) {
+      setEditFormError(validationError);
+      return;
+    }
 
     updateMutation.mutate(
       {
@@ -226,14 +257,16 @@ export function OwnerEventTypesPage() {
               <NumberInput
                 label="Длительность, минут"
                 min={1}
+                clampBehavior="none"
                 step={15}
                 value={createForm.durationMinutes}
                 onChange={(value) =>
                   setCreateForm((form) => ({
                     ...form,
-                    durationMinutes: Number(value) || form.durationMinutes,
+                    durationMinutes: value,
                   }))
                 }
+                error={createFormError}
                 required
               />
 
@@ -305,14 +338,16 @@ export function OwnerEventTypesPage() {
                         <NumberInput
                           label="Длительность, минут"
                           min={1}
+                          clampBehavior="none"
                           step={15}
                           value={editForm.durationMinutes}
                           onChange={(value) =>
                             setEditForm((form) => ({
                               ...form,
-                              durationMinutes: Number(value) || form.durationMinutes,
+                              durationMinutes: value,
                             }))
                           }
+                          error={editFormError}
                           required
                         />
 
