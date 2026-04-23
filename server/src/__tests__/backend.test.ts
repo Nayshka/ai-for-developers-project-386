@@ -16,6 +16,23 @@ function workSlotAtHour(hour: number, durationMinutes: number) {
   return { startAt: start.toISOString(), endAt: end.toISOString() };
 }
 
+function workSlotAtMinute(hour: number, minute: number, durationMinutes: number) {
+  const start = new Date(referenceDate);
+  start.setHours(hour, minute, 0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+
+  return { startAt: start.toISOString(), endAt: end.toISOString() };
+}
+
+function workSlotOnDay(dayOffset: number, hour: number, durationMinutes: number) {
+  const start = new Date(referenceDate);
+  start.setDate(start.getDate() + dayOffset);
+  start.setHours(hour, 0, 0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+
+  return { startAt: start.toISOString(), endAt: end.toISOString() };
+}
+
 function nextWorkSlot(durationMinutes: number) {
   return workSlotAtHour(16, durationMinutes);
 }
@@ -179,6 +196,36 @@ describe('backend API', () => {
     expect(bookingsResponse.json().items).toHaveLength(1);
   });
 
+  it('does not return a booked slot as available', async () => {
+    const range = nextWorkSlot(30);
+    const createResponse = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range,
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    });
+
+    expect(createResponse.statusCode).toBe(200);
+
+    const slotsResponse = await app.inject({
+      method: 'GET',
+      url: '/event-types/consultation/slots',
+    });
+
+    expect(slotsResponse.statusCode).toBe(200);
+    expect(
+      slotsResponse
+        .json()
+        .items.some((slot: { range: { startAt: string } }) => slot.range.startAt === range.startAt),
+    ).toBe(false);
+  });
+
   it('rejects an already booked slot', async () => {
     const range = nextWorkSlot(30);
     const payload = {
@@ -212,6 +259,78 @@ describe('backend API', () => {
     expect(secondResponse.json()).toMatchObject({
       code: 'slot_unavailable',
       message: 'Выбранный слот уже недоступен.',
+    });
+  });
+
+  it('rejects partially overlapping bookings', async () => {
+    const existingRange = nextWorkSlot(30);
+    const overlappingRange = workSlotAtMinute(16, 15, 30);
+
+    const firstResponse = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range: existingRange,
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    });
+    const secondResponse = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range: overlappingRange,
+        guest: {
+          name: 'Иван',
+          email: 'ivan@example.com',
+        },
+      },
+    });
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(secondResponse.statusCode).toBe(409);
+    expect(secondResponse.json()).toMatchObject({
+      code: 'slot_unavailable',
+    });
+  });
+
+  it('rejects overlapping bookings across different event types', async () => {
+    const existingRange = nextWorkSlot(30);
+    const overlappingRange = workSlotAtHour(16, 60);
+
+    const firstResponse = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range: existingRange,
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    });
+    const secondResponse = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'demo',
+        range: overlappingRange,
+        guest: {
+          name: 'Иван',
+          email: 'ivan@example.com',
+        },
+      },
+    });
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(secondResponse.statusCode).toBe(409);
+    expect(secondResponse.json()).toMatchObject({
+      code: 'slot_unavailable',
     });
   });
 
@@ -272,6 +391,96 @@ describe('backend API', () => {
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({
       code: 'booking_out_of_range',
+    });
+  });
+
+  it('rejects booking beyond the availability horizon', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range: workSlotOnDay(14, 9, 30),
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({
+      code: 'booking_out_of_range',
+    });
+  });
+
+  it('rejects booking with a duration that differs from the event type', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload: {
+        eventTypeId: 'consultation',
+        range: nextWorkSlot(45),
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({
+      code: 'slot_unavailable',
+    });
+  });
+
+  it.each([
+    {
+      caseName: 'missing guest name',
+      payload: {
+        eventTypeId: 'consultation',
+        range: nextWorkSlot(30),
+        guest: {
+          name: '',
+          email: 'anna@example.com',
+        },
+      },
+    },
+    {
+      caseName: 'invalid guest email',
+      payload: {
+        eventTypeId: 'consultation',
+        range: nextWorkSlot(30),
+        guest: {
+          name: 'Анна',
+          email: 'not-an-email',
+        },
+      },
+    },
+    {
+      caseName: 'invalid range date',
+      payload: {
+        eventTypeId: 'consultation',
+        range: {
+          startAt: 'not-a-date',
+          endAt: nextWorkSlot(30).endAt,
+        },
+        guest: {
+          name: 'Анна',
+          email: 'anna@example.com',
+        },
+      },
+    },
+  ])('rejects invalid booking payload: $caseName', async ({ payload }) => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      payload,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      code: 'validation_error',
     });
   });
 

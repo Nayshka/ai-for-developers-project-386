@@ -238,6 +238,28 @@ npm run backend:build
 npm run backend:test
 ```
 
+Интеграционные и e2e-тесты:
+
+```bash
+npm run test:integration
+npm run e2e
+npm run test
+```
+
+`npm run e2e` запускает Playwright. Конфигурация автоматически поднимает backend на `http://127.0.0.1:4010` и frontend на `http://127.0.0.1:5173`.
+
+Для первого локального запуска Playwright может потребоваться установить браузер:
+
+```bash
+npx playwright install chromium
+```
+
+В Linux-окружениях без системных зависимостей Chromium используйте:
+
+```bash
+npx playwright install-deps chromium
+```
+
 Production build:
 
 ```bash
