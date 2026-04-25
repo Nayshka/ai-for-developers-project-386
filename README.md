@@ -300,7 +300,7 @@ docker run --rm -p 4010:4010 -e PORT=4010 call-booking
 
 В репозитории есть `render.yaml` для деплоя Docker web service на Render. Render задаёт переменную `PORT` автоматически, а контейнер запускает приложение командой `node server/dist/index.js`.
 
-Публичная ссылка на приложение добавляется сюда после создания Render-сервиса.
+Публичная версия: https://call-booking-j4ye.onrender.com
 
 Генерация OpenAPI из TypeSpec:
 
