@@ -187,7 +187,7 @@ Backend MVP реализован по контракту из `spec/api.tsp`.
 - `/owner/bookings` показывает только предстоящие подтвержденные бронирования;
 - повторная попытка занять уже забронированный слот возвращает `409 slot_unavailable`.
 
-Backend по умолчанию запускается на `http://127.0.0.1:4010`, поэтому frontend может работать с ним без настройки `VITE_API_BASE_URL`.
+Backend по умолчанию запускается на порту `4010`, поэтому frontend может работать с ним без настройки `VITE_API_BASE_URL`.
 
 ### Команды frontend
 
@@ -265,6 +265,42 @@ Production build:
 ```bash
 npm run build
 ```
+
+Production backend build:
+
+```bash
+npm run backend:build
+```
+
+Production start:
+
+```bash
+PORT=4010 npm run start
+```
+
+В production backend слушает `0.0.0.0:$PORT`, поэтому его можно запускать внутри контейнера и на облачных платформах. Frontend в production отдаётся тем же Fastify-приложением из `dist`, а API-запросы по умолчанию идут на тот же origin. CORS пока оставлен включённым для совместимости с локальной разработкой.
+
+### Docker
+
+Сборка образа:
+
+```bash
+docker build -t call-booking .
+```
+
+Запуск контейнера:
+
+```bash
+docker run --rm -p 4010:4010 -e PORT=4010 call-booking
+```
+
+После запуска приложение доступно на `http://localhost:4010`.
+
+### Deploy
+
+В репозитории есть `render.yaml` для деплоя Docker web service на Render. Render задаёт переменную `PORT` автоматически, а контейнер запускает приложение командой `node server/dist/index.js`.
+
+Публичная ссылка на приложение добавляется сюда после создания Render-сервиса.
 
 Генерация OpenAPI из TypeSpec:
 

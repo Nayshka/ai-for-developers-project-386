@@ -12,7 +12,7 @@ import type {
   UpdateEventTypeForm,
 } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4010';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? window.location.origin;
 
 export class ApiError extends Error {
   constructor(

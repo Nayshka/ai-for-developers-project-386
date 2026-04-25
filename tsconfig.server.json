@@ -4,7 +4,9 @@
     "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "server/dist",
+    "rootDir": "server/src",
     "types": ["node", "vitest/globals"]
   },
   "include": ["server/src/**/*.ts"]
